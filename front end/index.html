@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mes Musiques</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
+    h1, h2 { text-align: center; }
+    form { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; }
+    input[type=file] { flex: 1; }
+    button { padding: 6px 12px; }
+    ul { list-style: none; padding: 0; }
+    li { margin: 8px 0; }
+    a { text-decoration: none; color: #007BFF; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <h1>Uploader et Télécharger Mes Musiques</h1>
+
+  <form id="uploadForm">
+    <input type="file" id="musicInput" name="music" accept="audio/*" required>
+    <button type="submit">Uploader</button>
+  </form>
+
+  <h2>Musiques Disponibles</h2>
+  <ul id="musicList"></ul>
+
+  <script>
+    // Base URL de l'API (vide si frontend servi depuis même domaine)
+    const API_BASE = '';
+
+    // Récupère et affiche la liste des fichiers
+    async function loadMusics() {
+      try {
+        const res = await fetch(`${API_BASE}/musics`);
+        const files = await res.json();
+        const list = document.getElementById('musicList');
+        list.innerHTML = '';
+        files.forEach(name => {
+          const li = document.createElement('li');
+          const link = document.createElement('a');
+          link.href = `${API_BASE}/download/${encodeURIComponent(name)}`;
+          link.textContent = name;
+          li.appendChild(link);
+          list.appendChild(li);
+        });
+      } catch (err) {
+        console.error('Erreur lors du chargement des musiques', err);
+      }
+    }
+
+    // Envoi du formulaire d'upload
+    document.getElementById('uploadForm').addEventListener('submit', async event => {
+      event.preventDefault();
+      const input = document.getElementById('musicInput');
+      if (!input.files.length) return;
+      const formData = new FormData();
+      formData.append('music', input.files[0]);
+
+      try {
+        const res = await fetch(`${API_BASE}/upload`, {
+          method: 'POST',
+          body: formData
+        });
+        if (res.ok) {
+          alert('Musique uploadée avec succès !');
+          loadMusics();
+        } else {
+          const err = await res.json();
+          alert('Erreur : ' + (err.error || res.statusText));
+        }
+      } catch (err) {
+        console.error('Erreur d\'upload', err);
+        alert('Erreur lors de l\'upload');
+      }
+    });
+
+    // Charge la liste au chargement de la page
+    window.addEventListener('DOMContentLoaded', loadMusics);
+  </script>
+</body>
+</html>
